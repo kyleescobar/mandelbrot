@@ -3,10 +3,10 @@ package dev.kyleescobar.mandelbrot
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.awt.image.BufferedImage.TYPE_INT_RGB
+import java.math.BigDecimal
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import javax.swing.SwingUtilities
 
 class Mandelbrot(var width: Int, var height: Int) {
 
@@ -19,34 +19,34 @@ class Mandelbrot(var width: Int, var height: Int) {
     val gradient = Gradient(
         MAX_GRADIENT_ITERATIONS,
         Color(0, 0, 0),
-        Color(170, 89, 246),
-        Color(255, 255, 50),
-        Color(255, 22, 17)
+        Color(255, 0, 0),
+        Color(255, 255, 0),
+        Color(255, 255, 255),
     )
 
-    var curMagnification: Long = 1L
+    var curMagnification = BigDecimal(1L)
 
     lateinit var executor: ExecutorService private set
 
     var cancelled: Boolean = false
 
-    var image = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
+    var image = BufferedImage(width, height, TYPE_INT_RGB)
     var raster = image.raster
 
-    fun draw(xPos: Double, yPos: Double, magnification: Long, iterations: Int): Boolean {
-        val xSize = initialWidth / magnification
-        val ySize = initialHeight / magnification
-        val xStart = curXStart + (initialWidth / curMagnification * xPos / width) - xSize / 2
-        val yStart = curYStart + (initialHeight / curMagnification * yPos / height) - ySize / 2
+    fun draw(xPos: Double, yPos: Double, magnification: BigDecimal, iterations: Int): Boolean {
+        val xSize = initialWidth / magnification.toDouble()
+        val ySize = initialHeight / magnification.toDouble()
+        val xStart = curXStart + (initialWidth / curMagnification.toDouble() * xPos / width) - xSize / 2
+        val yStart = curYStart + (initialHeight / curMagnification.toDouble() * yPos / height) - ySize / 2
 
         cancelled = false
         executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
 
-        for(i in 0 until 4) {
+        for(i in 0 until Main.THREADS) {
             val x = 0
-            val y = i * (height / 4)
-            val xLimit = x + width
-            val yLimit = y + (height / 4)
+            val y = i * (height / Main.THREADS)
+            val xLimit = (x + width)
+            val yLimit = y + (height / Main.THREADS)
             executor.execute(MandelbrotRenderer(xStart, xSize, yStart, ySize, width, height, x, y, xLimit, yLimit, iterations))
         }
 
@@ -67,6 +67,8 @@ class Mandelbrot(var width: Int, var height: Int) {
     fun resize(width: Int, height: Int) {
         this.width = width
         this.height = height
+        initialWidth = 3.0
+        initialHeight = initialWidth / width * height
         image = BufferedImage(width, height, TYPE_INT_RGB)
         raster = image.raster
     }
@@ -106,7 +108,7 @@ class Mandelbrot(var width: Int, var height: Int) {
                     //width/height of the screen at the current magnification (xSize,ySize)
                     val x0 = xStart + xSize * (x.toDouble() / width)
                     val y0 = yStart + ySize * (y.toDouble() / height)
-                    while (xc * xc + yc * yc < 2 * 2 && i < iterations) {
+                    while (xc * xc + yc * yc < 4 && i < iterations) {
                         val xtemp = xc * xc - yc * yc
                         yc = 2 * xc * yc + y0
                         xc = xtemp + x0

@@ -1,11 +1,11 @@
 package dev.kyleescobar.mandelbrot
 
 import java.awt.Canvas
-import javax.swing.SwingUtilities
+import java.math.BigDecimal
 
 class CanvasRenderer(val canvas: Canvas, val mandelbrot: Mandelbrot, var width: Int, var height: Int) : Runnable {
 
-    private var magnification = 1L
+    private var magnification = BigDecimal(1L)
     private var iterations = 100
     private var x: Int = width / 2
     private var y: Int =  height / 2
@@ -15,18 +15,18 @@ class CanvasRenderer(val canvas: Canvas, val mandelbrot: Mandelbrot, var width: 
     private fun zoom(x: Int, y: Int, magnification: Long, iterations: Int) {
         this.x = x
         this.y = y
-        this.magnification = magnification
+        this.magnification = BigDecimal(magnification)
         this.iterations = iterations
         cancel()
         triggerEvent()
     }
 
     fun zoomIn(x: Int, y: Int) {
-        zoom(x, y, magnification * 2, iterations + 75)
+        zoom(x, y, magnification.multiply(BigDecimal(2L)).toLong(), iterations + 75)
     }
 
     fun zoomOut(x: Int, y: Int) {
-        zoom(x, y, magnification / 2, iterations - 75)
+        zoom(x, y, magnification.divide(BigDecimal(2L)).toLong(), iterations - 75)
     }
 
     fun resize(width: Int, height: Int) {

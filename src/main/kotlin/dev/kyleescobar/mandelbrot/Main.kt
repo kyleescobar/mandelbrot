@@ -1,21 +1,20 @@
 package dev.kyleescobar.mandelbrot
 
-import com.formdev.flatlaf.FlatDarculaLaf
 import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkContrastIJTheme
-import com.formdev.flatlaf.ui.FlatProgressBarUI
 import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.lang.Math.round
 import javax.swing.JDialog
 import javax.swing.JFrame
 import javax.swing.JProgressBar
-import javax.swing.plaf.ProgressBarUI
+import kotlin.math.roundToInt
 
 object Main {
 
-    const val THREADS = 4
+    var THREADS: Int = 4
 
     lateinit var frame: JFrame
 
@@ -27,6 +26,9 @@ object Main {
 
     @JvmStatic
     fun main(args: Array<String>) {
+        val availableThreads = Runtime.getRuntime().availableProcessors() - 2
+        THREADS = (availableThreads / 2).toDouble().roundToInt() * 2
+
         JFrame.setDefaultLookAndFeelDecorated(true)
         JDialog.setDefaultLookAndFeelDecorated(true)
         FlatAtomOneDarkContrastIJTheme.setup()
@@ -38,7 +40,7 @@ object Main {
         frame.setLocationRelativeTo(null)
         frame.layout = BorderLayout()
 
-        mandelbrot = Mandelbrot(1080, 860)
+        mandelbrot = Mandelbrot(frame.width, frame.height)
         canvas = MandelbrotCanvas(mandelbrot)
         canvasRenderer = CanvasRenderer(canvas, mandelbrot, frame.width, frame.height)
 
@@ -66,6 +68,7 @@ object Main {
                 val width = e.component.width
                 val height = e.component.height
                 canvasRenderer.resize(width, height)
+                mandelbrot.resize(width, height)
             }
         })
 
@@ -74,13 +77,20 @@ object Main {
         val thread = Thread(canvasRenderer)
         thread.isDaemon = true
         thread.start()
+
+        canvas.init()
         canvas.repaint()
     }
 
     class MandelbrotCanvas(private val mandelbrot: Mandelbrot) : Canvas() {
 
+        fun init() {
+            createBufferStrategy(3)
+        }
+
         override fun paint(g: Graphics) {
-            g.drawImage(mandelbrot.image, 0, 0, Color.RED, null)
+            bufferStrategy.drawGraphics.drawImage(mandelbrot.image, 0, 0, Color.RED, null)
+            bufferStrategy.show()
         }
 
         override fun update(g: Graphics) {
